@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdeptBot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eaeaea;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 95vh;
+            margin: 0 10px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .chat-input-container {
+            display: flex;
+            padding: 12px;
+            border-top: 1px solid #ddd;
+            align-items: center;
+            background-color: #ffffff;
+        }
+
+        #textInput {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+            box-sizing: border-box;
+        }
+
+        .chat-input-container input[type="file"] {
+            display: none;
+        }
+
+        .chat-input-container label {
+            padding: 6px;
+            border-radius: 100%;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button {
+            background-color: #0056b3;
+            color: #ffffff;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-header button {
+            width: 100%;
+            background-color: #0056b3;
+            color: #ffffff;
+            text-align: center;
+            padding: 16px;
+            font-size: 22px;
+            border-radius: 0;
+            font-weight: 600;
+            border-bottom: 1px solid #004494;
+        }
+
+        button:hover {
+            background-color: #003d7a;
+        }
+
+        #result {
+            display: none;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 12px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #result p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .wave-loader {
+            display: none;
+            justify-content: center;
+            background-color: #f8f8f8;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .wave-loader div {
+            width: 1em;
+            height: 1em;
+            background-color: #0056b3;
+            border-radius: 100%;
+            animation: wave 1.5s infinite ease-in-out;
+            display: inline-block;
+            margin: 0 0.2em;
+        }
+
+        .wave-loader div:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .wave-loader div:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+        }
+
+        .message-container {
+            margin: 10px 0;
+        }
+
+        .message-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .user-message,
+        .bot-message {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f1f1f1;
+        }
+
+        .user-message {
+            background-color: #cfe9ff;
+            align-self: flex-end;
+        }
+
+        .user-message .copy-button {
+            display: none;
+        }
+
+        .bot-message {
+            background-color: #e2e2e2;
+            align-self: flex-start;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .upload-icon {
+            display: inline-block;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .upload-icon:hover {
+            background-color: #0056b3;
+        }
+
+        .image-preview-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 5px 10px;
+            background-color: #f8f8f8;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+        }
+
+        .message-buttons {
+            margin-top: 10px;
+        }
+
+        .message-button {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 6px 12px;
+            margin: 0 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .copy-button {
+            color: #007bff;
+            border-color: #007bff;
+        }
+
+        .copy-button:hover {
+            background-color: #e6f0ff;
+        }
+
+        .play-button {
+            color: #28a745;
+            border-color: #28a745;
+        }
+
+        .play-button:hover {
+            background-color: #d4edda;
+        }
+
+        .stop-button {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .stop-button:hover {
+            background-color: #f8d7da;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <button onclick="deleteChat()">AdeptBot - Delete Chat</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="wave-loader" id="waveLoader">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <div class="image-preview-container" id="imagePreviewContainer">
+            <img id="imagePreview" src="" alt="Image Preview" style="display: none;">
+        </div>
+        <div class="chat-input-container">
+            <label for="imageInput" class="upload-icon">
+                <i class="fas fa-image"></i>
+            </label>
+            <input type="file" id="imageInput" accept="image/*">
+            <input type="text" id="textInput" placeholder="Enter your message..." required>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div id="result">
+            <p id="responseText"></p>
+        </div>
+    </div>
+
+    <script>
+        function deleteChat() {
+            if (confirm('Are you sure you want to delete the chat history?')) {
+                document.getElementById('chatMessages').innerHTML = '';
+
+                localStorage.removeItem('chatHistory');
+
+                document.getElementById('imagePreview').style.display = 'none';
+            }
+        }
+        function appendMessage(sender, message, image = null) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+            messageContainer.classList.add(sender === 'You' ? 'user-message' : 'bot-message');
+
+            const escapedMessage = message.replace(/'/g, "\\'").replace(/"/g, "\\\"");
+
+            const copyButton = `<button class="message-button copy-button" onclick="copyMessage('${escapedMessage}')">📋</button>`;
+            const playButton = `<button class="message-button play-button" onclick="playMessage('${escapedMessage}')">▶️</button>`;
+            const stopButton = `<button class="message-button stop-button" onclick="stopMessage()">⏹️</button>`;
+
+            const buttons = sender === 'You' ? copyButton : `${copyButton} ${playButton} ${stopButton}`;
+
+            if (image) {
+                messageContainer.innerHTML = `
+        <strong>${sender}:</strong><br>
+        <img src="${image}" alt="Uploaded Image">
+        <p>${message}</p>
+        <div class="message-buttons">${buttons}</div>
+    `;
+            } else {
+                messageContainer.innerHTML = `
+        <strong>${sender}:</strong> ${message}
+        <div class="message-buttons">${buttons}</div>
+    `;
+            }
+
+            chatMessages.appendChild(messageContainer);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        document.getElementById('imageInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imagePreview = document.getElementById('imagePreview');
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function copyMessage(message) {
+            navigator.clipboard.writeText(message).then(() => {
+                alert('Message copied to clipboard!');
+            }).catch(err => {
+                console.error('Error copying text: ', err);
+            });
+        }
+
+        function playMessage(message) {
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+            currentUtterance = new SpeechSynthesisUtterance(message);
+            speechSynthesis.speak(currentUtterance);
+        }
+
+        function stopMessage() {
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+        }
+
+        function saveChatHistory() {
+            const chatMessages = document.getElementById('chatMessages').innerHTML;
+            localStorage.setItem('chatHistory', chatMessages);
+        }
+
+        function loadChatHistory() {
+            const chatHistory = localStorage.getItem('chatHistory');
+            if (chatHistory) {
+                document.getElementById('chatMessages').innerHTML = chatHistory;
+                document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+            }
+        }
+
+        window.onload = loadChatHistory;
+
+        function sendMessage() {
+            const textInput = document.getElementById('textInput');
+            const imageInput = document.getElementById('imageInput');
+            const waveLoader = document.getElementById('waveLoader');
+            const imagePreview = document.getElementById('imagePreview');
+
+            const text = textInput.value.trim();
+            const file = imageInput.files[0];
+
+            if (!text && !file) {
+                alert('Please enter a message or select an image.');
+                return;
+            }
+
+            if (text) {
+                appendMessage('You', text);
+            }
+
+            waveLoader.style.display = 'flex';
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    const imageBase64 = reader.result;
+                    const imagePreviewSrc = imageBase64;
+
+                    appendMessage('You', 'Image uploaded', imagePreviewSrc);
+
+                    const payload = {
+                        "contents": [{
+                            "parts": [{
+                                "text": text || 'Image'
+                            }, {
+                                "inlineData": {
+                                    "mimeType": file.type,
+                                    "data": imageBase64.split(',')[1]
+                                }
+                            }]
+                        }]
+                    };
+
+                    fetch('/generate_content', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            waveLoader.style.display = 'none';
+                            if (data.generated_content) {
+                                appendMessage('AdeptBot', data.generated_content);
+                            } else {
+                                appendMessage('AdeptBot', 'Sorry, I couldn\'t generate content from the image.');
+                            }
+                            saveChatHistory();
+                        })
+                        .catch(error => {
+                            waveLoader.style.display = 'none';
+                            console.error('Error:', error);
+                            appendMessage('AdeptBot', 'There was an error processing your request.');
+                        });
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const formData = new FormData();
+                formData.append('user_input', text);
+
+                fetch('/chat', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        waveLoader.style.display = 'none';
+                        if (data.bot_response) {
+                            appendMessage('AdeptBot', data.bot_response);
+                        } else {
+                            appendMessage('AdeptBot', 'Sorry, I couldn\'t respond to your message.');
+                        }
+                        saveChatHistory();
+                    })
+                    .catch(error => {
+                        waveLoader.style.display = 'none';
+                        console.error('Error:', error);
+                        appendMessage('AdeptBot', 'There was an error processing your request.');
+                    });
+            }
+
+            textInput.value = '';
+            imageInput.value = '';
+            imagePreview.style.display = 'none';
+        }
+
+    </script>
+</body>
+
+</html>
