@@ -27,7 +27,6 @@
             flex-direction: column;
             overflow: hidden;
             height: 95vh;
-            margin: 0 10px;
         }
 
         .chat-messages {
@@ -47,7 +46,7 @@
 
         #textInput {
             flex: 1;
-            padding: 12px;
+            padding: 12px 5px;
             font-size: 16px;
             border: 1px solid #ddd;
             border-radius: 20px;
@@ -299,41 +298,44 @@
     </div>
 
     <script>
+        let lastUploadedImage = null;
+
         function deleteChat() {
             if (confirm('Are you sure you want to delete the chat history?')) {
                 document.getElementById('chatMessages').innerHTML = '';
-
                 localStorage.removeItem('chatHistory');
-
+                lastUploadedImage = null;
+                localStorage.removeItem('lastUploadedImage');
                 document.getElementById('imagePreview').style.display = 'none';
             }
         }
+
         function appendMessage(sender, message, image = null) {
             const chatMessages = document.getElementById('chatMessages');
             const messageContainer = document.createElement('div');
             messageContainer.classList.add('message-container');
             messageContainer.classList.add(sender === 'You' ? 'user-message' : 'bot-message');
 
-            const escapedMessage = message.replace(/'/g, "\\'").replace(/"/g, "\\\"");
+            const uniqueId = Date.now();
 
-            const copyButton = `<button class="message-button copy-button" onclick="copyMessage('${escapedMessage}')">📋</button>`;
-            const playButton = `<button class="message-button play-button" onclick="playMessage('${escapedMessage}')">▶️</button>`;
+            const copyButton = `<button class="message-button copy-button" onclick="copyMessage('${uniqueId}')">📋</button>`;
+            const playButton = `<button class="message-button play-button" onclick="playMessage('${uniqueId}')">▶️</button>`;
             const stopButton = `<button class="message-button stop-button" onclick="stopMessage()">⏹️</button>`;
 
             const buttons = sender === 'You' ? copyButton : `${copyButton} ${playButton} ${stopButton}`;
 
             if (image) {
                 messageContainer.innerHTML = `
-        <strong>${sender}:</strong><br>
-        <img src="${image}" alt="Uploaded Image">
-        <p>${message}</p>
-        <div class="message-buttons">${buttons}</div>
-    `;
+            <strong>${sender}:</strong><br>
+            <img src="${image}" alt="Uploaded Image">
+            <p id="message-${uniqueId}" data-message="${message}">${message}</p>
+            <div class="message-buttons">${buttons}</div>
+        `;
             } else {
                 messageContainer.innerHTML = `
-        <strong>${sender}:</strong> ${message}
-        <div class="message-buttons">${buttons}</div>
-    `;
+            <strong>${sender}:</strong> <span id="message-${uniqueId}" data-message="${message}">${message}</span>
+            <div class="message-buttons">${buttons}</div>
+        `;
             }
 
             chatMessages.appendChild(messageContainer);
@@ -345,9 +347,10 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    const imagePreview = document.getElementById('imagePreview');
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
+                    lastUploadedImage = e.target.result;
+                    localStorage.setItem('lastUploadedImage', lastUploadedImage);
+                    document.getElementById('imagePreview').src = lastUploadedImage;
+                    document.getElementById('imagePreview').style.display = 'block';
                 };
                 reader.readAsDataURL(file);
             }
@@ -356,7 +359,8 @@
         let speechSynthesis = window.speechSynthesis;
         let currentUtterance = null;
 
-        function copyMessage(message) {
+        function copyMessage(id) {
+            const message = document.getElementById(`message-${id}`).dataset.message;
             navigator.clipboard.writeText(message).then(() => {
                 alert('Message copied to clipboard!');
             }).catch(err => {
@@ -364,7 +368,8 @@
             });
         }
 
-        function playMessage(message) {
+        function playMessage(id) {
+            const message = document.getElementById(`message-${id}`).dataset.message;
             if (currentUtterance) {
                 speechSynthesis.cancel();
             }
@@ -385,6 +390,7 @@
 
         function loadChatHistory() {
             const chatHistory = localStorage.getItem('chatHistory');
+            lastUploadedImage = localStorage.getItem('lastUploadedImage');
             if (chatHistory) {
                 document.getElementById('chatMessages').innerHTML = chatHistory;
                 document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
@@ -408,7 +414,7 @@
             }
 
             if (text) {
-                appendMessage('You', text);
+                appendMessage('You', text, file ? lastUploadedImage : null);
             }
 
             waveLoader.style.display = 'flex';
@@ -416,10 +422,8 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function () {
-                    const imageBase64 = reader.result;
-                    const imagePreviewSrc = imageBase64;
-
-                    appendMessage('You', 'Image uploaded', imagePreviewSrc);
+                    lastUploadedImage = reader.result;
+                    localStorage.setItem('lastUploadedImage', lastUploadedImage);
 
                     const payload = {
                         "contents": [{
@@ -428,7 +432,7 @@
                             }, {
                                 "inlineData": {
                                     "mimeType": file.type,
-                                    "data": imageBase64.split(',')[1]
+                                    "data": lastUploadedImage.split(',')[1]
                                 }
                             }]
                         }]
@@ -459,36 +463,74 @@
                 };
                 reader.readAsDataURL(file);
             } else {
-                const formData = new FormData();
-                formData.append('user_input', text);
+                if (lastUploadedImage) {
+                    const payload = {
+                        "contents": [{
+                            "parts": [{
+                                "text": text || 'Image'
+                            }, {
+                                "inlineData": {
+                                    "mimeType": 'image/jpeg',
+                                    "data": lastUploadedImage.split(',')[1]
+                                }
+                            }]
+                        }]
+                    };
 
-                fetch('/chat', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        waveLoader.style.display = 'none';
-                        if (data.bot_response) {
-                            appendMessage('AdeptBot', data.bot_response);
-                        } else {
-                            appendMessage('AdeptBot', 'Sorry, I couldn\'t respond to your message.');
-                        }
-                        saveChatHistory();
+                    fetch('/generate_content', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
                     })
-                    .catch(error => {
-                        waveLoader.style.display = 'none';
-                        console.error('Error:', error);
-                        appendMessage('AdeptBot', 'There was an error processing your request.');
-                    });
+                        .then(response => response.json())
+                        .then(data => {
+                            waveLoader.style.display = 'none';
+                            if (data.generated_content) {
+                                appendMessage('AdeptBot', data.generated_content);
+                            } else {
+                                appendMessage('AdeptBot', 'Sorry, I couldn\'t generate content from the image.');
+                            }
+                            saveChatHistory();
+                        })
+                        .catch(error => {
+                            waveLoader.style.display = 'none';
+                            console.error('Error:', error);
+                            appendMessage('AdeptBot', 'There was an error processing your request.');
+                        });
+                } else {
+                    const formData = new FormData();
+                    formData.append('user_input', text);
+
+                    fetch('/chat', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            waveLoader.style.display = 'none';
+                            if (data.bot_response) {
+                                appendMessage('AdeptBot', data.bot_response);
+                            } else {
+                                appendMessage('AdeptBot', 'Sorry, I couldn\'t respond to your message.');
+                            }
+                            saveChatHistory();
+                        })
+                        .catch(error => {
+                            waveLoader.style.display = 'none';
+                            console.error('Error:', error);
+                            appendMessage('AdeptBot', 'There was an error processing your request.');
+                        });
+                }
             }
 
             textInput.value = '';
             imageInput.value = '';
             imagePreview.style.display = 'none';
         }
-
     </script>
+
 </body>
 
 </html>
