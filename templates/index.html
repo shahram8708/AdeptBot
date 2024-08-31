@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AdeptBot</title>
+    <title>I.R.I.S - Image Recognition Insight System</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -273,7 +273,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <button onclick="deleteChat()">AdeptBot - Delete Chat</button>
+            <button onclick="deleteChat()">I.R.I.S - Delete Chat</button>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="wave-loader" id="waveLoader">
@@ -449,16 +449,16 @@
                         .then(data => {
                             waveLoader.style.display = 'none';
                             if (data.generated_content) {
-                                appendMessage('AdeptBot', data.generated_content);
+                                appendMessage('I.R.I.S', data.generated_content);
                             } else {
-                                appendMessage('AdeptBot', 'Sorry, I couldn\'t generate content from the image.');
+                                appendMessage('I.R.I.S', 'Sorry, I couldn\'t generate content from the image.');
                             }
                             saveChatHistory();
                         })
                         .catch(error => {
                             waveLoader.style.display = 'none';
                             console.error('Error:', error);
-                            appendMessage('AdeptBot', 'There was an error processing your request.');
+                            appendMessage('I.R.I.S', 'There was an error processing your request.');
                         });
                 };
                 reader.readAsDataURL(file);
@@ -488,16 +488,16 @@
                         .then(data => {
                             waveLoader.style.display = 'none';
                             if (data.generated_content) {
-                                appendMessage('AdeptBot', data.generated_content);
+                                appendMessage('I.R.I.S', data.generated_content);
                             } else {
-                                appendMessage('AdeptBot', 'Sorry, I couldn\'t generate content from the image.');
+                                appendMessage('I.R.I.S', 'Sorry, I couldn\'t generate content from the image.');
                             }
                             saveChatHistory();
                         })
                         .catch(error => {
                             waveLoader.style.display = 'none';
                             console.error('Error:', error);
-                            appendMessage('AdeptBot', 'There was an error processing your request.');
+                            appendMessage('I.R.I.S', 'There was an error processing your request.');
                         });
                 } else {
                     const formData = new FormData();
@@ -511,16 +511,16 @@
                         .then(data => {
                             waveLoader.style.display = 'none';
                             if (data.bot_response) {
-                                appendMessage('AdeptBot', data.bot_response);
+                                appendMessage('I.R.I.S', data.bot_response);
                             } else {
-                                appendMessage('AdeptBot', 'Sorry, I couldn\'t respond to your message.');
+                                appendMessage('I.R.I.S', 'Sorry, I couldn\'t respond to your message.');
                             }
                             saveChatHistory();
                         })
                         .catch(error => {
                             waveLoader.style.display = 'none';
                             console.error('Error:', error);
-                            appendMessage('AdeptBot', 'There was an error processing your request.');
+                            appendMessage('I.R.I.S', 'There was an error processing your request.');
                         });
                 }
             }
