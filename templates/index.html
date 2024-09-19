@@ -455,11 +455,6 @@
                             }
                             saveChatHistory();
                         })
-                        .catch(error => {
-                            waveLoader.style.display = 'none';
-                            console.error('Error:', error);
-                            appendMessage('I.R.I.S', 'There was an error processing your request.');
-                        });
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -494,11 +489,6 @@
                             }
                             saveChatHistory();
                         })
-                        .catch(error => {
-                            waveLoader.style.display = 'none';
-                            console.error('Error:', error);
-                            appendMessage('I.R.I.S', 'There was an error processing your request.');
-                        });
                 } else {
                     const formData = new FormData();
                     formData.append('user_input', text);
@@ -517,11 +507,6 @@
                             }
                             saveChatHistory();
                         })
-                        .catch(error => {
-                            waveLoader.style.display = 'none';
-                            console.error('Error:', error);
-                            appendMessage('I.R.I.S', 'There was an error processing your request.');
-                        });
                 }
             }
 
