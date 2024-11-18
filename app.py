@@ -8,7 +8,7 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-API_KEY = "AIzaSyCkvPRcKa1wetImSwv7nQ5emgg9AYIUE8A"
+API_KEY = "API_Key"
 genai.configure(api_key=API_KEY)
 
 logging.basicConfig(level=logging.DEBUG)
