@@ -8,7 +8,7 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-API_KEY = "API_Key"
+API_KEY = "AIzaSyCLTXDhAgFA9QrzbUfREzTZj5KgeVOAhp4"
 genai.configure(api_key=API_KEY)
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,10 +20,6 @@ chat_session = model.start_chat(history=[])
 def index():
     return render_template('index.html')
 
-def replace_words(text, replacements):
-    for old_word, new_word in replacements.items():
-        text = text.replace(old_word, new_word)
-    return text
 
 @app.route('/generate_content', methods=['POST'])
 def generate_content():
@@ -48,9 +44,6 @@ def generate_content():
 
         generated_content = response_json.get('candidates')[0]['content']['parts'][0]['text']
 
-        replacements = {'Google': 'Neural Networker Team', 'Gemini': 'I.R.I.S', 'Gemini 1.5 Flash model': 'I.R.I.S model', 'Sundar Pichai': 'Shah Ram', 'Alphabet': 'AI/ML Developer', '2015': '2024', 'Larry Page and Sergey Brin': 'Shah Ram'}
-        generated_content = replace_words(generated_content, replacements)
-
         if generated_content:
             html_content = markdown.markdown(generated_content)
             chat_session.send_message(text_input)
@@ -72,9 +65,6 @@ def chat_response():
         if user_input.lower() != 'exit':
             response = chat_session.send_message(user_input)
             bot_response = response.text
-
-            replacements = {'Google': 'Neural Networker Team', 'Gemini': 'I.R.I.S', 'Gemini 1.5 Flash model': 'I.R.I.S model', 'Sundar Pichai': 'Shah Ram', 'Alphabet': 'AI/ML Developer', '2015': '2024', 'Larry Page and Sergey Brin': 'Shah Ram'}
-            bot_response = replace_words(bot_response, replacements)
 
             bot_response_html = markdown.markdown(bot_response)
         else:
