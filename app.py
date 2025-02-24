@@ -4,22 +4,34 @@ import requests
 import logging
 import markdown
 import os
-import google.generativeai as genai
 
 app = Flask(__name__)
 
-API_KEY = "AIzaSyCLTXDhAgFA9QrzbUfREzTZj5KgeVOAhp4"
-genai.configure(api_key=API_KEY)
-
 logging.basicConfig(level=logging.DEBUG)
 
-model = genai.GenerativeModel('gemini-1.5-flash')
-chat_session = model.start_chat(history=[])
+class HealthModel:
+    def __init__(self, model_name):
+        self.model_name = model_name
+        self.chat_history = []
+
+    def start_chat(self):
+        self.chat_history = []
+
+    def send_message(self, message):
+        self.chat_history.append({'role': 'user', 'content': message})
+        response = self.generate_response(message)
+        self.chat_history.append({'role': 'bot', 'content': response})
+        return response
+
+    def generate_response(self, message):
+        return ("To process your input, please ensure the model is connected and running on an NVIDIA GPU. If the issue persists even after proper GPU setup, make sure the trained model is correctly loaded. Load and run the trained model IRIS-MEDx-1.0 to receive accurate responses.")
+
+model = HealthModel('IRIS-MEDx-1.0')
+model.start_chat()
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/generate_content', methods=['POST'])
 def generate_content():
@@ -34,23 +46,13 @@ def generate_content():
         image_base64 = payload['contents'][0]['parts'][1]['inlineData']['data']
         image_data = base64.b64decode(image_base64)
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={API_KEY}"
-        headers = {"Content-Type": "application/json"}
+        response_text = model.generate_response(text_input)
+        html_content = markdown.markdown(response_text)
 
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        response_json = response.json()
-        logging.debug("Response JSON: %s", response_json)
+        model.send_message(text_input)
+        model.send_message(response_text)
 
-        generated_content = response_json.get('candidates')[0]['content']['parts'][0]['text']
-
-        if generated_content:
-            html_content = markdown.markdown(generated_content)
-            chat_session.send_message(text_input)
-            chat_session.send_message(generated_content)
-            return jsonify({'generated_content': html_content})
-        else:
-            return jsonify({'error': 'Failed to generate content.'}), 500
+        return jsonify({'generated_content': html_content})
 
     except Exception as e:
         logging.error("An error occurred: %s", str(e))
@@ -63,13 +65,11 @@ def chat_response():
         logging.debug("User input: %s", user_input)
 
         if user_input.lower() != 'exit':
-            response = chat_session.send_message(user_input)
-            bot_response = response.text
-
+            bot_response = model.send_message(user_input)
             bot_response_html = markdown.markdown(bot_response)
         else:
             bot_response_html = markdown.markdown("Chat ended. Please refresh the page to start a new chat.")
-        
+
         return jsonify(user_input=user_input, bot_response=bot_response_html)
 
     except Exception as e:
