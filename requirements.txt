@@ -1,5 +1,4 @@
 Flask
 requests
 markdown
-google-generativeai
 gunicorn
